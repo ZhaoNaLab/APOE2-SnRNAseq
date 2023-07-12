@@ -1,0 +1,43 @@
+#!/bin/bash
+
+## The name of the job, can be anything, simply used when displaying the list of running jobs
+#$ -N <%= job.name %>
+
+## Send email
+#$ -M <%= resources$email %>
+
+## Send at abort or end
+#$ -m ae
+
+## Set memory
+#$ -l h_vmem=<%= resources$h_vmem %>
+
+## Combining output/error messages into one file
+#$ -j y
+
+## Threades
+#$ -pe threaded 4
+
+## Giving the name of the output log file
+#$ -o <%= log.file %>
+
+## One needs to tell the queue system to use the current directory as the working directory
+## Or else the script may fail as it will execute in your top level home directory /home/username
+#$ -cwd
+
+## Use environment variables
+#$ -V
+
+## Use correct queue
+#$ -q <%= resources$queue %>
+
+## Export value of DEBUGME environemnt var to slave
+export DEBUGME=<%= Sys.getenv("DEBUGME") %>
+source active <%= resources$conda.env %>
+
+<%= sprintf("export OMP_NUM_THREADS=%i", resources$omp.threads) -%>
+<%= sprintf("export OPENBLAS_NUM_THREADS=%i", resources$blas.threads) -%>
+<%= sprintf("export MKL_NUM_THREADS=%i", resources$blas.threads) -%>
+
+Rscript -e 'batchtools::doJobCollection("<%= uri %>")'
+exit 0
